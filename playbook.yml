@@ -1,0 +1,6 @@
+---
+- name: install postgres
+  hosts: server1
+  become: true
+  tasks:
+    - include_tasks: install_pg.yml

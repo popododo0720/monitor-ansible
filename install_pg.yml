@@ -1,0 +1,55 @@
+- name: Update APT package index
+  apt:
+    update_cache: yes
+
+- name: Install PG
+  apt:
+    name: 
+      - postgresql
+      - postgresql-contrib
+      - python3-psycopg2
+    state: present
+
+- name: mkdir tablespace
+  file:
+    path: /monitoring/database
+    state: directory
+    owner: postgres
+    group: postgres
+    mode: '0700'
+
+- name: Set PG passwd
+  become_user: postgres
+  postgresql_user:
+    name: postgres
+    password: "coremax1@#"
+
+- name: Create tablespace
+  become_user: postgres
+  postgresql_tablespace:
+    name: monitoring
+    location: /monitoring/database/
+
+- name: Create database
+  become_user: postgres
+  postgresql_db:
+    name: monitoring_db
+    tablespace: monitoring
+
+- name: Configure postgresql.conf
+  lineinfile:
+    path: /etc/postgresql/14/main/postgresql.conf
+    regexp: '^#listen_addresses ='
+    line: "listen_addresses = '*'"
+    owner: postgres
+    group: postgres
+    mode: '0644'
+
+- name: configure pg_hba
+  blockinfile:
+    path: /etc/postgresql/14/main/pg_hba.conf
+    marker: "# {mark} ANSIBLE MANAGED BLOCK"
+    block: |
+      host    all             all             192.168.0.31/32         md5
+      host    all             all             192.168.0.32/32         md5
+      host    all             all             192.168.0.33/32         md5
